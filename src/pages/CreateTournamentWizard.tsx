@@ -266,7 +266,7 @@ export default function CreateTournamentWizard() {
           <Card><CardContent className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <Card onClick={() => setRegMode('import')} className={`cursor-pointer ${regMode === 'import' ? 'ring-2 ring-primary' : ''}`}>
-                <CardContent className="p-4 text-center"><Users className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">استيراد الفرق</div><div className="text-xs text-muted-foreground">أضف الفرق بنفسك</div></CardContent>
+                <CardContent className="p-4 text-center"><Users className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">استيراد الفرق</div><div className="text-xs text-muted-foreground">من مستودع الفرق</div></CardContent>
               </Card>
               <Card onClick={() => setRegMode('open')} className={`cursor-pointer ${regMode === 'open' ? 'ring-2 ring-primary' : ''}`}>
                 <CardContent className="p-4 text-center"><Link2 className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">بطولة مفتوحة</div><div className="text-xs text-muted-foreground">رابط للتسجيل</div></CardContent>
