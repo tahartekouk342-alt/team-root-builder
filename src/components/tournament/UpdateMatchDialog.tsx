@@ -203,14 +203,6 @@ export function UpdateMatchDialog({
             </>
           )}
 
-          {/* Man of the Match */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm">
-              <Star className="w-4 h-4 text-amber-500" /> رجل المباراة (اختياري)
-            </Label>
-            <Input placeholder="اسم اللاعب" value={manOfMatch} onChange={(e) => setManOfMatch(e.target.value)} />
-          </div>
-
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">إلغاء</Button>
             <Button
