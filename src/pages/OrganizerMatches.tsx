@@ -267,6 +267,11 @@ function CardsScorersDialog({ match, onClose, onSaved }: any) {
             )}
           </div>
 
+          <div className="space-y-2 border-t pt-3">
+            <Label className="text-sm font-bold flex items-center gap-2">⭐ رجل المباراة</Label>
+            <Input placeholder="اسم اللاعب" value={motm} onChange={e => setMotm(e.target.value)} />
+          </div>
+
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
             <Button onClick={save} disabled={saving} className="flex-1 bg-primary text-primary-foreground">حفظ</Button>
