@@ -98,7 +98,7 @@ function notify(name: string) {
 }
 
 // ---- query builder ----
-type Filter = { type: "eq" | "in"; col: string; val: any };
+type Filter = { type: "eq" | "in" | "is" | "not"; col: string; val: any; op?: string };
 type Order = { col: string; ascending: boolean };
 
 class QueryBuilder<T = any> implements PromiseLike<{ data: any; error: any; count: number | null }> {
@@ -137,6 +137,8 @@ class QueryBuilder<T = any> implements PromiseLike<{ data: any; error: any; coun
   }
   eq(col: string, val: any) { this.filters.push({ type: "eq", col, val }); return this; }
   in(col: string, val: any[]) { this.filters.push({ type: "in", col, val }); return this; }
+  is(col: string, val: any) { this.filters.push({ type: "is", col, val }); return this; }
+  not(col: string, op: string, val: any) { this.filters.push({ type: "not", col, val, op }); return this; }
   order(col: string, opts?: { ascending?: boolean }) {
     this.orders.push({ col, ascending: opts?.ascending !== false });
     return this;
@@ -149,6 +151,11 @@ class QueryBuilder<T = any> implements PromiseLike<{ data: any; error: any; coun
     return this.filters.every((f) => {
       if (f.type === "eq") return row[f.col] === f.val;
       if (f.type === "in") return (f.val || []).includes(row[f.col]);
+      if (f.type === "is") return (row[f.col] ?? null) === (f.val ?? null);
+      if (f.type === "not") {
+        if (f.op === "is") return (row[f.col] ?? null) !== (f.val ?? null);
+        return row[f.col] !== f.val;
+      }
       return true;
     });
   }
