@@ -1,0 +1,543 @@
+/* Fonts loaded via <link> in index.html: Oswald (display), Inter (sans), Cairo (Arabic) */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode — Bottolat identity: navy + green + gold */
+    --background: 0 0% 99%;
+    --foreground: 222 60% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 60% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 60% 12%;
+
+    /* Primary — Bottolat Navy #1E3A8A */
+    --primary: 224 64% 33%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 30% 96%;
+    --secondary-foreground: 222 60% 12%;
+
+    --muted: 215 30% 96%;
+    --muted-foreground: 215 16% 42%;
+
+    /* Accent — Bottolat Gold #F4B43C */
+    --accent: 40 90% 53%;
+    --accent-foreground: 222 60% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success — Bottolat Green #2D8659 */
+    --success: 145 50% 38%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 40 90% 53%;
+    --warning-foreground: 222 60% 12%;
+
+    --info: 217 91% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 215 25% 90%;
+    --input: 215 25% 90%;
+    --ring: 224 64% 33%;
+
+    --radius: 0.875rem;
+
+    --bracket-line: 215 25% 88%;
+    --group-header: 215 30% 96%;
+    --match-card: 0 0% 100%;
+    --standings-row-alt: 215 30% 98%;
+    --live-pulse: 0 72% 51%;
+
+    /* Brand colors as direct tokens */
+    --brand-navy: 224 64% 33%;
+    --brand-green: 145 50% 38%;
+    --brand-gold: 40 90% 53%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(224 64% 20% / 0.05);
+    --shadow-md: 0 2px 4px hsl(224 64% 20% / 0.05), 0 4px 12px hsl(224 64% 20% / 0.06);
+    --shadow-lg: 0 8px 16px -4px hsl(224 64% 20% / 0.10), 0 16px 32px -8px hsl(224 64% 20% / 0.08);
+    --shadow-xl: 0 20px 40px -12px hsl(224 64% 20% / 0.14);
+    --shadow-glow: 0 0 28px hsl(224 64% 33% / 0.22);
+    --shadow-card: 0 1px 3px hsl(224 64% 20% / 0.05), 0 4px 12px hsl(224 64% 20% / 0.05);
+
+    --gradient-primary: linear-gradient(135deg, hsl(224 64% 38%), hsl(224 70% 24%));
+    --gradient-accent: linear-gradient(135deg, hsl(40 95% 58%), hsl(36 90% 46%));
+    --gradient-brand: linear-gradient(120deg, hsl(145 50% 38%) 0%, hsl(224 64% 33%) 55%, hsl(40 90% 53%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%), hsl(215 30% 98%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(215 30% 99%));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.92), hsl(215 30% 96% / 0.78));
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 60% 12%;
+    --sidebar-primary: 224 64% 33%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 30% 96%;
+    --sidebar-accent-foreground: 222 60% 12%;
+    --sidebar-border: 215 25% 90%;
+    --sidebar-ring: 224 64% 33%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 224 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 40 90% 53%;
+    --accent-foreground: 222 60% 12%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 55% 48%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 17%;
+    --ring: 158 64% 42%;
+
+    --bracket-line: 217 33% 25%;
+    --group-header: 217 33% 15%;
+    --match-card: 222 47% 11%;
+    --standings-row-alt: 222 47% 10%;
+    --live-pulse: 0 84% 60%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.5);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 24px hsl(158 64% 42% / 0.2);
+    --shadow-card: 0 4px 12px hsl(0 0% 0% / 0.3);
+
+    --gradient-primary: linear-gradient(135deg, hsl(158 64% 42%), hsl(158 64% 32%));
+    --gradient-accent: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 40%));
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 8%), hsl(222 47% 10%));
+    --gradient-card: linear-gradient(180deg, hsl(222 47% 11%), hsl(222 47% 9%));
+    --gradient-glass: linear-gradient(135deg, hsl(222 47% 11% / 0.85), hsl(222 47% 8% / 0.65));
+
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 158 64% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 158 64% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html[lang="ar"] {
+    font-family: 'Tajawal', 'Inter', sans-serif;
+  }
+
+  html[lang="fr"], html:not([lang]) {
+    font-family: 'Inter', 'Tajawal', sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3,
+  html[lang="ar"] h4, html[lang="ar"] h5, html[lang="ar"] h6 {
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .sports-card {
+    @apply bg-card border border-border rounded-xl overflow-hidden shadow-card transition-all duration-300;
+  }
+
+  .sports-card:hover {
+    @apply border-primary/40 -translate-y-1 shadow-lg;
+  }
+
+  .feature-card {
+    @apply relative overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/50;
+  }
+
+  .feature-card-image {
+    @apply relative h-40 overflow-hidden;
+  }
+
+  .feature-card-image img {
+    @apply w-full h-full object-cover transition-transform duration-500;
+  }
+
+  .feature-card:hover .feature-card-image img {
+    @apply scale-110;
+  }
+
+  .feature-card-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent;
+  }
+
+  .feature-card-icon {
+    @apply absolute bottom-3 right-3 w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg;
+  }
+
+  .feature-card-content {
+    @apply p-5;
+  }
+
+  .feature-card-title {
+    @apply text-lg font-bold mb-2;
+  }
+
+  .feature-card-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .glass-effect {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply shadow-lg -translate-y-1;
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .live-indicator {
+    @apply relative flex items-center gap-2 px-3 py-1 bg-destructive/10 text-destructive text-xs font-bold rounded-full;
+  }
+
+  .live-indicator::before {
+    content: '';
+    @apply w-2 h-2 bg-destructive rounded-full animate-pulse;
+  }
+
+  .input-enhanced {
+    @apply transition-all duration-200 bg-secondary border-border rounded-lg;
+  }
+  
+  .input-enhanced:focus {
+    @apply ring-2 ring-primary/30 border-primary bg-background;
+  }
+
+  .page-container {
+    @apply min-h-screen bg-background relative overflow-hidden;
+  }
+
+  .section-spacing {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  /* Subtle sports background applied to all main content pages */
+  .sports-bg {
+    @apply relative;
+  }
+
+  .sports-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: url('/images/sport-stadium.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  .dark .sports-bg::before {
+    opacity: 0.06;
+  }
+
+  .sports-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(circle at 15% 20%, hsl(var(--primary) / 0.06), transparent 40%),
+      radial-gradient(circle at 85% 80%, hsl(var(--primary) / 0.05), transparent 40%);
+    pointer-events: none;
+  }
+
+  .card-elevated {
+    @apply bg-card border border-border rounded-xl shadow-card;
+  }
+
+  .card-interactive {
+    @apply bg-card border border-border rounded-xl shadow-card transition-all duration-300 cursor-pointer;
+  }
+
+  .card-interactive:hover {
+    @apply shadow-lg border-primary/40 -translate-y-1;
+  }
+
+  .card-grid-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+
+  .card-grid-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .btn-primary {
+    @apply gradient-primary text-primary-foreground glow-primary font-semibold rounded-lg px-6 py-3 transition-all duration-200 hover:shadow-lg active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-foreground border border-border font-semibold rounded-lg px-6 py-3 transition-all duration-200 hover:bg-secondary/80 active:scale-95;
+  }
+
+  .bracket-container {
+    @apply bg-card border border-border rounded-xl p-6;
+  }
+
+  .bracket-group {
+    @apply bg-secondary rounded-lg p-4 mb-4;
+  }
+
+  .bracket-match {
+    @apply bg-card border border-border rounded-lg p-3 mb-3 transition-all duration-200;
+  }
+
+  .bracket-match:hover {
+    @apply border-primary/40 shadow-lg;
+  }
+
+  .standings-table {
+    @apply w-full border-collapse;
+  }
+
+  .standings-table thead {
+    @apply bg-secondary border-b border-border;
+  }
+
+  .standings-table th {
+    @apply px-4 py-3 font-semibold text-sm;
+  }
+
+  .standings-table td {
+    @apply px-4 py-3 border-b border-border;
+  }
+
+  .standings-table tbody tr {
+    @apply transition-all duration-200 hover:bg-secondary;
+  }
+
+  .standings-table tbody tr:nth-child(even) {
+    @apply bg-standings-row-alt;
+  }
+
+  .tournament-header {
+    @apply relative overflow-hidden rounded-xl;
+    background-size: cover;
+    background-position: center;
+    min-height: 280px;
+  }
+
+  .tournament-header::before {
+    @apply absolute inset-0 bg-black/30;
+    content: '';
+  }
+
+  .tournament-header-content {
+    @apply relative z-10 flex flex-col justify-end h-full p-6 text-white;
+  }
+
+  .tab-navigation {
+    @apply flex gap-0 border-b border-border bg-background;
+  }
+
+  .tab-item {
+    @apply px-6 py-3 font-medium text-muted-foreground cursor-pointer transition-all relative flex items-center gap-2;
+  }
+
+  .tab-item.active {
+    @apply text-primary font-semibold;
+  }
+
+  .tab-item.active::after {
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-primary;
+    content: '';
+  }
+
+  .tab-item:hover {
+    @apply text-foreground;
+  }
+
+  .match-card {
+    @apply bg-card rounded-xl p-4 border border-border shadow-card hover:shadow-lg transition-all;
+  }
+
+  .match-card-image {
+    @apply w-full h-40 rounded-lg object-cover mb-4;
+  }
+
+  .match-score {
+    @apply text-3xl font-bold text-foreground;
+  }
+
+  .team-name {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  /* Brand striped background — diagonal green/navy/gold strokes echoing the logo */
+  .brand-stripes {
+    position: relative;
+    background-color: hsl(var(--background));
+    background-image:
+      repeating-linear-gradient(
+        135deg,
+        hsl(var(--brand-navy) / 0.045) 0px,
+        hsl(var(--brand-navy) / 0.045) 2px,
+        transparent 2px,
+        transparent 22px,
+        hsl(var(--brand-green) / 0.05) 22px,
+        hsl(var(--brand-green) / 0.05) 24px,
+        transparent 24px,
+        transparent 44px,
+        hsl(var(--brand-gold) / 0.06) 44px,
+        hsl(var(--brand-gold) / 0.06) 46px,
+        transparent 46px,
+        transparent 66px
+      );
+  }
+
+  .dark .brand-stripes {
+    background-image:
+      repeating-linear-gradient(
+        135deg,
+        hsl(var(--brand-navy) / 0.18) 0px,
+        hsl(var(--brand-navy) / 0.18) 2px,
+        transparent 2px,
+        transparent 22px,
+        hsl(var(--brand-green) / 0.14) 22px,
+        hsl(var(--brand-green) / 0.14) 24px,
+        transparent 24px,
+        transparent 44px,
+        hsl(var(--brand-gold) / 0.14) 44px,
+        hsl(var(--brand-gold) / 0.14) 46px,
+        transparent 46px,
+        transparent 66px
+      );
+  }
+
+  .brand-hero {
+    background:
+      radial-gradient(circle at 0% 0%, hsl(var(--brand-green) / 0.12), transparent 45%),
+      radial-gradient(circle at 100% 100%, hsl(var(--brand-gold) / 0.12), transparent 45%),
+      linear-gradient(135deg, hsl(var(--brand-navy)) 0%, hsl(224 70% 22%) 100%);
+    color: white;
+  }
+
+  .text-brand-gradient {
+    background: linear-gradient(120deg, hsl(var(--brand-navy)), hsl(var(--brand-green)) 55%, hsl(var(--brand-gold)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+[dir="rtl"] {
+  text-align: right;
+}
+
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background transition-shadow duration-200;
+}
+
+button, [role="button"] {
+  @apply transition-all duration-200 active:scale-95;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
+}
