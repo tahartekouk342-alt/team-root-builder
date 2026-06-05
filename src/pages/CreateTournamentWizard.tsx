@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, Trophy, Users, Sparkles, Link2, Copy, Check, Camera } from 'lucide-react';
+import { ArrowRight, Loader2, Trophy, Users, Sparkles, Link2, Copy, Check, Camera, Download } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,12 +57,21 @@ export default function CreateTournamentWizard() {
   const [legs, setLegs] = useState<1 | 2>(1);
   const [joinCode, setJoinCode] = useState<string | null>(null);
 
-  // teams (import)
-  const [teamsList, setTeamsList] = useState<string[]>([]);
-  const [newTeam, setNewTeam] = useState('');
+  // teams (import from repository)
+  const [repoTeams, setRepoTeams] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // draw
   const [drawTeams, setDrawTeams] = useState<DrawTeam[]>([]);
+
+  // Load repository teams (teams not attached to any tournament)
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('teams').select('*')
+        .is('tournament_id', null).eq('owner_id', user?.id || null);
+      setRepoTeams(data || []);
+    })();
+  }, [user?.id]);
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
@@ -112,30 +121,40 @@ export default function CreateTournamentWizard() {
 
   const goToTeams = () => setTab('teams');
 
-  const addTeamName = () => {
-    const n = newTeam.trim();
-    if (!n || teamsList.includes(n)) return;
-    if (teamsList.length >= maxTeams) return toast({ title: `الحد الأقصى ${maxTeams} فرق`, variant: 'destructive' });
-    setTeamsList([...teamsList, n]); setNewTeam('');
+  const toggleTeam = (id: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= maxTeams) {
+        toast({ title: `الحد الأقصى ${maxTeams} فرق`, variant: 'destructive' });
+        return prev;
+      }
+      return [...prev, id];
+    });
   };
 
   const goToDraw = async () => {
-    if (teamsList.length < 2) return toast({ title: 'أدخل فريقين على الأقل', variant: 'destructive' });
+    if (selectedIds.length < 2) return toast({ title: 'اختر فريقين على الأقل', variant: 'destructive' });
     setLoading(true);
     try {
       const logoUrl = await uploadLogo();
       const { data: t, error } = await supabase.from('tournaments').insert({
         name, type, sport_type: sport, status: 'draft',
         start_date: startDate || null, venue_name: venueName || null,
-        num_teams: teamsList.length, logo_url: logoUrl,
+        num_teams: selectedIds.length, logo_url: logoUrl,
         num_groups: numGroups, league_legs: legs,
         qualifiers_per_group: qualifiersPerGroup,
         owner_id: user?.id || null,
       } as any).select().single();
       if (error) throw error;
       setCreatedId(t.id);
+      const chosen = repoTeams.filter(rt => selectedIds.includes(rt.id));
       const { data: teams } = await supabase.from('teams').insert(
-        teamsList.map((n, i) => ({ tournament_id: t.id, name: n, seed: i + 1 })),
+        chosen.map((rt, i) => ({
+          tournament_id: t.id, name: rt.name, logo_url: rt.logo_url || null,
+          sport_type: rt.sport_type || sport,
+          player_names: rt.player_names || [], player_photos: rt.player_photos || [],
+          player_info: rt.player_info || [], seed: i + 1,
+        })),
       ).select();
       setDrawTeams((teams || []) as any);
       setTab('draw');
