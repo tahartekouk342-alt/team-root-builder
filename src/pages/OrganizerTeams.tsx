@@ -211,17 +211,6 @@ function CreateTeamDialog({ team, onClose, onSaved }: any) {
             </div>
           </div>
 
-          <div>
-            <Label>البطولة *</Label>
-            <Select value={tournamentId} onValueChange={setTournamentId}>
-              <SelectTrigger><SelectValue placeholder="اختر البطولة" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" disabled>اختر البطولة</SelectItem>
-                {tournaments.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>اللاعبون ({players.length})</Label>
