@@ -22,10 +22,18 @@ export default function OrganizerTournamentsList() {
   const { tournaments, loading } = useTournaments();
   const [editTournament, setEditTournament] = useState<any>(null);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('الكل');
+
+  const STATUS_GROUPS: Record<string, string[]> = {
+    'نشطة': ['active', 'live', 'ongoing'],
+    'مكتملة': ['completed'],
+    'مسودة': ['draft', 'upcoming'],
+  };
 
   const myTournaments = tournaments
     .filter(t => t.owner_id === user?.id)
-    .filter(t => !search || t.name.toLowerCase().includes(search.toLowerCase()));
+    .filter(t => !search || t.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(t => statusFilter === 'الكل' || (STATUS_GROUPS[statusFilter] || []).includes(t.status));
 
   return (
     <div className="min-h-screen" dir="rtl">
@@ -47,8 +55,9 @@ export default function OrganizerTournamentsList() {
 
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
           {['الكل', 'نشطة', 'مكتملة', 'مسودة'].map((f, i) => (
-            <button key={i} className="shrink-0 h-10 px-3 rounded-lg bg-muted border border-border text-xs text-foreground flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <button key={i} onClick={() => setStatusFilter(f)}
+              className={`shrink-0 h-10 px-3 rounded-lg border text-xs flex items-center gap-1 transition ${statusFilter === f ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted border-border text-foreground'}`}>
+              <Filter className={`w-3.5 h-3.5 ${statusFilter === f ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
               {f}
             </button>
           ))}
