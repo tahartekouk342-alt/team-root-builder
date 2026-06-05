@@ -191,6 +191,7 @@ function CardsScorersDialog({ match, onClose, onSaved }: any) {
   const [scorers, setScorers] = useState<any[]>(match.scorers || []);
   const [name, setName] = useState('');
   const [team, setTeam] = useState<'home' | 'away'>('home');
+  const [motm, setMotm] = useState<string>(match.man_of_the_match || '');
   const [saving, setSaving] = useState(false);
 
   const homePlayers: string[] = match.home_team?.player_names || [];
@@ -208,7 +209,7 @@ function CardsScorersDialog({ match, onClose, onSaved }: any) {
       await supabase.from('matches').update({
         home_yellow_cards: hY, away_yellow_cards: aY,
         home_red_cards: hR, away_red_cards: aR,
-        scorers,
+        scorers, man_of_the_match: motm || null,
       }).eq('id', match.id);
       toast({ title: '✅ تم الحفظ' });
       onSaved();
