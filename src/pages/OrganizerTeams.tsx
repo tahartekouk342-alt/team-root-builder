@@ -107,14 +107,25 @@ export default function OrganizerTeams() {
   );
 }
 
-function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
+function CreateTeamDialog({ team, onClose, onSaved }: any) {
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [sport, setSport] = useState('football');
-  const [tournamentId, setTournamentId] = useState<string>('none');
+  const { user } = useAuth();
+  const isEdit = !!team;
+  const [name, setName] = useState(team?.name || '');
+  const [sport, setSport] = useState(team?.sport_type || 'football');
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(team?.logo_url || null);
+  const [players, setPlayers] = useState<Player[]>(
+    Array.isArray(team?.player_names)
+      ? team.player_names.map((n: string, i: number) => ({
+          name: n,
+          photo: team.player_photos?.[i] || undefined,
+          position: team.player_info?.[i]?.position || '',
+          number: team.player_info?.[i]?.number || '',
+          dob: team.player_info?.[i]?.dob || '',
+        }))
+      : [],
+  );
   const [saving, setSaving] = useState(false);
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,23 +150,31 @@ function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
 
   const save = async () => {
     if (!name.trim()) return toast({ title: 'أدخل اسم الفريق', variant: 'destructive' });
-    if (tournamentId === 'none') return toast({ title: 'اختر البطولة', variant: 'destructive' });
     setSaving(true);
     try {
-      const logoUrl = logoFile ? await upload(logoFile, 'team-logos') : null;
+      const logoUrl = logoFile ? await upload(logoFile, 'team-logos') : (team?.logo_url || null);
       const names: string[] = []; const photos: string[] = []; const info: any[] = [];
       for (const p of players) {
         if (!p.name.trim()) continue;
         names.push(p.name);
-        photos.push(p.photoFile ? (await upload(p.photoFile, 'player-photos')) || '' : '');
+        photos.push(p.photoFile ? (await upload(p.photoFile, 'player-photos')) || '' : (p.photo || ''));
         info.push({ name: p.name, position: p.position || '', number: p.number || '', dob: p.dob || '' });
       }
-      const { error } = await supabase.from('teams').insert({
-        tournament_id: tournamentId, name: name.trim(), logo_url: logoUrl,
+      const payload = {
+        name: name.trim(), logo_url: logoUrl,
         sport_type: sport as any, player_names: names, player_photos: photos, player_info: info,
-      } as any);
-      if (error) throw error;
-      toast({ title: '✅ تم إضافة الفريق' });
+      };
+      if (isEdit) {
+        const { error } = await supabase.from('teams').update(payload).eq('id', team.id);
+        if (error) throw error;
+        toast({ title: '✅ تم تعديل الفريق' });
+      } else {
+        const { error } = await supabase.from('teams').insert({
+          ...payload, tournament_id: null, owner_id: user?.id || null,
+        } as any);
+        if (error) throw error;
+        toast({ title: '✅ تم إضافة الفريق' });
+      }
       onSaved();
     } catch (e: any) {
       toast({ title: 'خطأ', description: e.message, variant: 'destructive' });
