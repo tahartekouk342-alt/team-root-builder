@@ -1,6 +1,6 @@
 import { BrandLogo } from '@/components/BrandLogo';
 import { useState } from 'react';
-import { Bell, Search, Users, Plus, X, Camera, Loader2, Trash2 } from 'lucide-react';
+import { Bell, Search, Users, Plus, X, Camera, Loader2, Trash2, Pencil } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 interface Player { name: string; photo?: string; photoFile?: File; position?: string; number?: string; dob?: string; }
@@ -24,33 +23,22 @@ export default function OrganizerTeams() {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [openCreate, setOpenCreate] = useState(false);
-
-  const { data: tournaments = [] } = useQuery({
-    queryKey: ['org-tournaments-list', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from('tournaments').select('id, name, sport_type').eq('owner_id', user.id);
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
+  const [editTeam, setEditTeam] = useState<any>(null);
 
   const { data: teams = [], refetch } = useQuery({
     queryKey: ['org-teams', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const ids = tournaments.map((t: any) => t.id);
-      if (!ids.length) return [];
-      const tMap = Object.fromEntries(tournaments.map((t: any) => [t.id, t]));
+      // Repository teams = teams not attached to any tournament, owned by the organizer
       const { data: rows } = await supabase.from('teams')
-        .select('id, name, logo_url, tournament_id, is_eliminated, player_names, sport_type').in('tournament_id', ids);
+        .select('*').is('tournament_id', null).eq('owner_id', user.id);
       return (rows || []).map((t: any) => ({
-        ...t, tournament: tMap[t.tournament_id],
-        sport: t.sport_type || tMap[t.tournament_id]?.sport_type || 'football',
+        ...t,
+        sport: t.sport_type || 'football',
         members: Array.isArray(t.player_names) ? t.player_names.length : 0,
       }));
     },
-    enabled: !!user?.id && tournaments.length > 0,
+    enabled: !!user?.id,
   });
 
   const filtered = teams.filter((t: any) => !search || t.name.toLowerCase().includes(search.toLowerCase()));
@@ -72,6 +60,9 @@ export default function OrganizerTeams() {
       </header>
 
       <div className="p-4 space-y-3">
+        <div className="text-xs text-muted-foreground bg-primary/5 border border-primary/20 rounded-lg p-2">
+          📦 هذه صفحة مستودع الفرق. أنشئ فرقك هنا ثم استوردها عند إنشاء أي بطولة.
+        </div>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -96,9 +87,11 @@ export default function OrganizerTeams() {
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     <span>{sportEmoji(t.sport)}</span>
                     <span><Users className="w-3 h-3 inline" /> {t.members}</span>
-                    <span className="truncate">· {t.tournament?.name}</span>
                   </div>
                 </div>
+                <Button variant="ghost" size="icon" onClick={() => setEditTeam(t)} className="text-primary">
+                  <Pencil className="w-4 h-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => deleteTeam(t.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -108,7 +101,8 @@ export default function OrganizerTeams() {
         </div>
       </div>
 
-      {openCreate && <CreateTeamDialog tournaments={tournaments} onClose={() => setOpenCreate(false)} onSaved={() => { setOpenCreate(false); refetch(); }} />}
+      {openCreate && <CreateTeamDialog onClose={() => setOpenCreate(false)} onSaved={() => { setOpenCreate(false); refetch(); }} />}
+      {editTeam && <CreateTeamDialog team={editTeam} onClose={() => setEditTeam(null)} onSaved={() => { setEditTeam(null); refetch(); }} />}
     </div>
   );
 }
