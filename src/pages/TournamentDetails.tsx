@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Trophy, Users, ListChecks, Trash2, MapPin, Copy, Check, Link2, Dice5, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { StandingsTable } from '@/components/standings/StandingsTable';
 import { BracketView } from '@/components/tournament/BracketView';
 import { DrawDisplay } from '@/components/tournament/DrawDisplay';
-import { generateAllMatches, generateKnockoutFromGroups, type DrawTeam } from '@/lib/draw';
+import { generateAllMatches, generateKnockoutFromGroups, generateKnockoutFromLeague, type DrawTeam } from '@/lib/draw';
 import { UpdateMatchDialog } from '@/components/tournament/UpdateMatchDialog';
 
 export default function TournamentDetails() {
@@ -26,6 +26,34 @@ export default function TournamentDetails() {
   const [copied, setCopied] = useState(false);
   const [editMatch, setEditMatch] = useState<any>(null);
   const [drawing, setDrawing] = useState(false);
+  const [autoTransitioning, setAutoTransitioning] = useState(false);
+
+  // Auto-transition from group/league stage to knockout once the stage is complete.
+  useEffect(() => {
+    if (!tournament || autoTransitioning) return;
+    const type = tournament.type;
+    if (type !== 'groups' && type !== 'league') return;
+    const hasKnockout = matches.some((m: any) => m.stage === 'knockout');
+    if (hasKnockout) return;
+    const stageMatches = type === 'groups'
+      ? matches.filter((m: any) => m.group_name)
+      : matches.filter((m: any) => !m.group_name);
+    if (stageMatches.length < 1) return;
+    if (!stageMatches.every((m: any) => m.status === 'completed')) return;
+    setAutoTransitioning(true);
+    (async () => {
+      try {
+        const n = type === 'groups'
+          ? await generateKnockoutFromGroups({ tournamentId: id!, qualifiersPerGroup: (tournament as any).qualifiers_per_group || 2 })
+          : await generateKnockoutFromLeague({ tournamentId: id!, topN: (tournament as any).playoff_teams || undefined });
+        if (n > 0) {
+          toast({ title: '🏆 الانتقال إلى دور الإقصاء', description: `تم توليد ${n} مباراة` });
+          fetchTournamentDetails();
+        }
+      } catch { /* not enough qualifiers yet */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, tournament]);
 
   if (loading) return <div className="p-8"><Skeleton className="h-12 w-64 mb-4" /><Skeleton className="h-96" /></div>;
   if (!tournament) return (
