@@ -286,7 +286,7 @@ export default function CreateTournamentWizard() {
               </>
             )}
             {regMode === 'import' && (
-              <Button onClick={goToTeams} className="w-full bg-primary text-primary-foreground">التالي: إضافة الفرق</Button>
+              <Button onClick={goToTeams} className="w-full bg-primary text-primary-foreground">التالي: استيراد الفرق</Button>
             )}
           </CardContent></Card>
         </TabsContent>
@@ -314,21 +314,32 @@ export default function CreateTournamentWizard() {
         {/* --- TEAMS (import) --- */}
         <TabsContent value="teams" className="space-y-4">
           <Card><CardContent className="p-4 space-y-3">
-            <div className="flex gap-2">
-              <Input placeholder="اسم الفريق" value={newTeam} onChange={e => setNewTeam(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addTeamName()} />
-              <Button onClick={addTeamName}>إضافة</Button>
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-sm flex items-center gap-2"><Download className="w-4 h-4 text-primary" /> استيراد الفرق من المستودع</div>
+              <span className="text-xs text-muted-foreground">{selectedIds.length} / {maxTeams}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {teamsList.map((tn, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded border bg-card text-sm">
-                  <span className="truncate">{i + 1}. {tn}</span>
-                  <button onClick={() => setTeamsList(teamsList.filter((_, j) => j !== i))} className="text-destructive text-xs">حذف</button>
-                </div>
-              ))}
-            </div>
-            <div className="text-xs text-muted-foreground">{teamsList.length} / {maxTeams} فرق</div>
-            <Button onClick={goToDraw} disabled={loading || teamsList.length < 2} className="w-full bg-primary text-primary-foreground">
+            {repoTeams.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                لا توجد فرق في المستودع. أضف الفرق أولاً من صفحة «الفرق».
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
+                {repoTeams.map((rt) => {
+                  const sel = selectedIds.includes(rt.id);
+                  return (
+                    <button key={rt.id} type="button" onClick={() => toggleTeam(rt.id)}
+                      className={`flex items-center gap-2 p-2 rounded border text-sm text-right transition ${sel ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}`}>
+                      <div className="w-9 h-9 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
+                        {rt.logo_url ? <img src={rt.logo_url} className="w-full h-full object-cover" alt="" /> : '⚽'}
+                      </div>
+                      <span className="truncate flex-1">{rt.name}</span>
+                      {sel && <Check className="w-4 h-4 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <Button onClick={goToDraw} disabled={loading || selectedIds.length < 2} className="w-full bg-primary text-primary-foreground">
               {loading ? <Loader2 className="w-4 h-4 animate-spin ms-2" /> : <Sparkles className="w-4 h-4 ms-2" />}
               التالي: القرعة
             </Button>
