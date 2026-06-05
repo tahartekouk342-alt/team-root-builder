@@ -112,13 +112,10 @@ export default function OrganizerStats() {
           <BarChart3 className="w-5 h-5 text-primary" />
           <h1 className="font-display text-lg font-bold">الإحصائيات</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="w-4 h-4 ms-1" /> طباعة</Button>
-          <Button variant="outline" size="sm" onClick={downloadCSV}><Download className="w-4 h-4 ms-1" /> CSV</Button>
-        </div>
+        <div className="w-10" />
       </header>
 
-      <div className="p-4 lg:p-8 space-y-4 max-w-6xl mx-auto">
+      <div className="p-4 lg:p-8 space-y-4 max-w-6xl mx-auto print-area">
         <div className="grid grid-cols-2 gap-3 print:hidden">
           <div>
             <Label className="text-xs">الرياضة</Label>
@@ -137,6 +134,11 @@ export default function OrganizerStats() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="flex gap-2 print:hidden">
+          <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="w-4 h-4 ms-1" /> طباعة الترتيب</Button>
+          <Button variant="outline" size="sm" onClick={downloadCSV}><Download className="w-4 h-4 ms-1" /> تنزيل CSV</Button>
         </div>
 
         <Card>

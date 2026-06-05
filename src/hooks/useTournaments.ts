@@ -505,7 +505,7 @@ export function useTournaments() {
         }
       }
 
-      if (!match.group_name && winnerId) {
+      if (match.stage !== 'league' && !match.group_name && winnerId) {
         const { data: roundMatches } = await supabase.from('matches')
           .select('*').eq('tournament_id', match.tournament_id).eq('round', match.round).is('group_name', null);
 

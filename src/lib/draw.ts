@@ -226,3 +226,47 @@ export function generateJoinCode(len = 8): string {
   for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
   return s;
 }
+
+/**
+ * After a league finishes, build a knockout bracket from the final standings.
+ * Picks the top N (largest power of two ≤ team count, optionally capped by topN)
+ * and seeds 1↔last, 2↔(last-1)…
+ */
+export async function generateKnockoutFromLeague(opts: {
+  tournamentId: string;
+  topN?: number;
+}) {
+  const { tournamentId, topN } = opts;
+  const { data: standings } = await supabase
+    .from('standings').select('*').eq('tournament_id', tournamentId);
+  if (!standings?.length) throw new Error('لا يوجد ترتيب');
+
+  const sorted = [...standings].sort((a, b) =>
+    (b.points || 0) - (a.points || 0) ||
+    (b.goal_difference || 0) - (a.goal_difference || 0) ||
+    (b.goals_for || 0) - (a.goals_for || 0));
+
+  let n = 1;
+  while (n * 2 <= sorted.length) n *= 2;
+  if (topN && topN >= 2) { let cap = 1; while (cap * 2 <= topN) cap *= 2; n = Math.min(n, cap); }
+  if (n < 2) throw new Error('عدد المتأهلين غير كافٍ');
+
+  const qualifiers = sorted.slice(0, n).map((s: any) => s.team_id);
+
+  const { data: last } = await supabase.from('matches').select('round')
+    .eq('tournament_id', tournamentId).order('round', { ascending: false }).limit(1);
+  const nextRound = ((last?.[0]?.round) || 0) + 1;
+
+  const rows: any[] = [];
+  for (let i = 0; i < qualifiers.length / 2; i++) {
+    rows.push({
+      tournament_id: tournamentId,
+      home_team_id: qualifiers[i],
+      away_team_id: qualifiers[qualifiers.length - 1 - i],
+      round: nextRound, match_order: i + 1,
+      status: 'scheduled' as const, stage: 'knockout',
+    });
+  }
+  if (rows.length) await supabase.from('matches').insert(rows);
+  return rows.length;
+}

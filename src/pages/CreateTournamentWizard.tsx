@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, Trophy, Users, Sparkles, Link2, Copy, Check, Camera } from 'lucide-react';
+import { ArrowRight, Loader2, Trophy, Users, Sparkles, Link2, Copy, Check, Camera, Download } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,12 +57,21 @@ export default function CreateTournamentWizard() {
   const [legs, setLegs] = useState<1 | 2>(1);
   const [joinCode, setJoinCode] = useState<string | null>(null);
 
-  // teams (import)
-  const [teamsList, setTeamsList] = useState<string[]>([]);
-  const [newTeam, setNewTeam] = useState('');
+  // teams (import from repository)
+  const [repoTeams, setRepoTeams] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // draw
   const [drawTeams, setDrawTeams] = useState<DrawTeam[]>([]);
+
+  // Load repository teams (teams not attached to any tournament)
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('teams').select('*')
+        .is('tournament_id', null).eq('owner_id', user?.id || null);
+      setRepoTeams(data || []);
+    })();
+  }, [user?.id]);
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
@@ -112,30 +121,40 @@ export default function CreateTournamentWizard() {
 
   const goToTeams = () => setTab('teams');
 
-  const addTeamName = () => {
-    const n = newTeam.trim();
-    if (!n || teamsList.includes(n)) return;
-    if (teamsList.length >= maxTeams) return toast({ title: `الحد الأقصى ${maxTeams} فرق`, variant: 'destructive' });
-    setTeamsList([...teamsList, n]); setNewTeam('');
+  const toggleTeam = (id: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= maxTeams) {
+        toast({ title: `الحد الأقصى ${maxTeams} فرق`, variant: 'destructive' });
+        return prev;
+      }
+      return [...prev, id];
+    });
   };
 
   const goToDraw = async () => {
-    if (teamsList.length < 2) return toast({ title: 'أدخل فريقين على الأقل', variant: 'destructive' });
+    if (selectedIds.length < 2) return toast({ title: 'اختر فريقين على الأقل', variant: 'destructive' });
     setLoading(true);
     try {
       const logoUrl = await uploadLogo();
       const { data: t, error } = await supabase.from('tournaments').insert({
         name, type, sport_type: sport, status: 'draft',
         start_date: startDate || null, venue_name: venueName || null,
-        num_teams: teamsList.length, logo_url: logoUrl,
+        num_teams: selectedIds.length, logo_url: logoUrl,
         num_groups: numGroups, league_legs: legs,
         qualifiers_per_group: qualifiersPerGroup,
         owner_id: user?.id || null,
       } as any).select().single();
       if (error) throw error;
       setCreatedId(t.id);
+      const chosen = repoTeams.filter(rt => selectedIds.includes(rt.id));
       const { data: teams } = await supabase.from('teams').insert(
-        teamsList.map((n, i) => ({ tournament_id: t.id, name: n, seed: i + 1 })),
+        chosen.map((rt, i) => ({
+          tournament_id: t.id, name: rt.name, logo_url: rt.logo_url || null,
+          sport_type: rt.sport_type || sport,
+          player_names: rt.player_names || [], player_photos: rt.player_photos || [],
+          player_info: rt.player_info || [], seed: i + 1,
+        })),
       ).select();
       setDrawTeams((teams || []) as any);
       setTab('draw');
@@ -247,7 +266,7 @@ export default function CreateTournamentWizard() {
           <Card><CardContent className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <Card onClick={() => setRegMode('import')} className={`cursor-pointer ${regMode === 'import' ? 'ring-2 ring-primary' : ''}`}>
-                <CardContent className="p-4 text-center"><Users className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">استيراد الفرق</div><div className="text-xs text-muted-foreground">أضف الفرق بنفسك</div></CardContent>
+                <CardContent className="p-4 text-center"><Users className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">استيراد الفرق</div><div className="text-xs text-muted-foreground">من مستودع الفرق</div></CardContent>
               </Card>
               <Card onClick={() => setRegMode('open')} className={`cursor-pointer ${regMode === 'open' ? 'ring-2 ring-primary' : ''}`}>
                 <CardContent className="p-4 text-center"><Link2 className="w-8 h-8 mx-auto mb-2 text-primary" /><div className="font-bold text-sm">بطولة مفتوحة</div><div className="text-xs text-muted-foreground">رابط للتسجيل</div></CardContent>
@@ -267,7 +286,7 @@ export default function CreateTournamentWizard() {
               </>
             )}
             {regMode === 'import' && (
-              <Button onClick={goToTeams} className="w-full bg-primary text-primary-foreground">التالي: إضافة الفرق</Button>
+              <Button onClick={goToTeams} className="w-full bg-primary text-primary-foreground">التالي: استيراد الفرق</Button>
             )}
           </CardContent></Card>
         </TabsContent>
@@ -295,21 +314,32 @@ export default function CreateTournamentWizard() {
         {/* --- TEAMS (import) --- */}
         <TabsContent value="teams" className="space-y-4">
           <Card><CardContent className="p-4 space-y-3">
-            <div className="flex gap-2">
-              <Input placeholder="اسم الفريق" value={newTeam} onChange={e => setNewTeam(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addTeamName()} />
-              <Button onClick={addTeamName}>إضافة</Button>
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-sm flex items-center gap-2"><Download className="w-4 h-4 text-primary" /> استيراد الفرق من المستودع</div>
+              <span className="text-xs text-muted-foreground">{selectedIds.length} / {maxTeams}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {teamsList.map((tn, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded border bg-card text-sm">
-                  <span className="truncate">{i + 1}. {tn}</span>
-                  <button onClick={() => setTeamsList(teamsList.filter((_, j) => j !== i))} className="text-destructive text-xs">حذف</button>
-                </div>
-              ))}
-            </div>
-            <div className="text-xs text-muted-foreground">{teamsList.length} / {maxTeams} فرق</div>
-            <Button onClick={goToDraw} disabled={loading || teamsList.length < 2} className="w-full bg-primary text-primary-foreground">
+            {repoTeams.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                لا توجد فرق في المستودع. أضف الفرق أولاً من صفحة «الفرق».
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
+                {repoTeams.map((rt) => {
+                  const sel = selectedIds.includes(rt.id);
+                  return (
+                    <button key={rt.id} type="button" onClick={() => toggleTeam(rt.id)}
+                      className={`flex items-center gap-2 p-2 rounded border text-sm text-right transition ${sel ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}`}>
+                      <div className="w-9 h-9 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
+                        {rt.logo_url ? <img src={rt.logo_url} className="w-full h-full object-cover" alt="" /> : '⚽'}
+                      </div>
+                      <span className="truncate flex-1">{rt.name}</span>
+                      {sel && <Check className="w-4 h-4 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <Button onClick={goToDraw} disabled={loading || selectedIds.length < 2} className="w-full bg-primary text-primary-foreground">
               {loading ? <Loader2 className="w-4 h-4 animate-spin ms-2" /> : <Sparkles className="w-4 h-4 ms-2" />}
               التالي: القرعة
             </Button>

@@ -1,6 +1,6 @@
 import { BrandLogo } from '@/components/BrandLogo';
 import { useState } from 'react';
-import { Bell, Search, Users, Plus, X, Camera, Loader2, Trash2 } from 'lucide-react';
+import { Bell, Search, Users, Plus, X, Camera, Loader2, Trash2, Pencil } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 interface Player { name: string; photo?: string; photoFile?: File; position?: string; number?: string; dob?: string; }
@@ -24,33 +23,22 @@ export default function OrganizerTeams() {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [openCreate, setOpenCreate] = useState(false);
-
-  const { data: tournaments = [] } = useQuery({
-    queryKey: ['org-tournaments-list', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from('tournaments').select('id, name, sport_type').eq('owner_id', user.id);
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
+  const [editTeam, setEditTeam] = useState<any>(null);
 
   const { data: teams = [], refetch } = useQuery({
     queryKey: ['org-teams', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const ids = tournaments.map((t: any) => t.id);
-      if (!ids.length) return [];
-      const tMap = Object.fromEntries(tournaments.map((t: any) => [t.id, t]));
+      // Repository teams = teams not attached to any tournament, owned by the organizer
       const { data: rows } = await supabase.from('teams')
-        .select('id, name, logo_url, tournament_id, is_eliminated, player_names, sport_type').in('tournament_id', ids);
+        .select('*').is('tournament_id', null).eq('owner_id', user.id);
       return (rows || []).map((t: any) => ({
-        ...t, tournament: tMap[t.tournament_id],
-        sport: t.sport_type || tMap[t.tournament_id]?.sport_type || 'football',
+        ...t,
+        sport: t.sport_type || 'football',
         members: Array.isArray(t.player_names) ? t.player_names.length : 0,
       }));
     },
-    enabled: !!user?.id && tournaments.length > 0,
+    enabled: !!user?.id,
   });
 
   const filtered = teams.filter((t: any) => !search || t.name.toLowerCase().includes(search.toLowerCase()));
@@ -72,6 +60,9 @@ export default function OrganizerTeams() {
       </header>
 
       <div className="p-4 space-y-3">
+        <div className="text-xs text-muted-foreground bg-primary/5 border border-primary/20 rounded-lg p-2">
+          📦 هذه صفحة مستودع الفرق. أنشئ فرقك هنا ثم استوردها عند إنشاء أي بطولة.
+        </div>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -96,9 +87,11 @@ export default function OrganizerTeams() {
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     <span>{sportEmoji(t.sport)}</span>
                     <span><Users className="w-3 h-3 inline" /> {t.members}</span>
-                    <span className="truncate">· {t.tournament?.name}</span>
                   </div>
                 </div>
+                <Button variant="ghost" size="icon" onClick={() => setEditTeam(t)} className="text-primary">
+                  <Pencil className="w-4 h-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => deleteTeam(t.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -108,19 +101,31 @@ export default function OrganizerTeams() {
         </div>
       </div>
 
-      {openCreate && <CreateTeamDialog tournaments={tournaments} onClose={() => setOpenCreate(false)} onSaved={() => { setOpenCreate(false); refetch(); }} />}
+      {openCreate && <CreateTeamDialog onClose={() => setOpenCreate(false)} onSaved={() => { setOpenCreate(false); refetch(); }} />}
+      {editTeam && <CreateTeamDialog team={editTeam} onClose={() => setEditTeam(null)} onSaved={() => { setEditTeam(null); refetch(); }} />}
     </div>
   );
 }
 
-function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
+function CreateTeamDialog({ team, onClose, onSaved }: any) {
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [sport, setSport] = useState('football');
-  const [tournamentId, setTournamentId] = useState<string>('none');
+  const { user } = useAuth();
+  const isEdit = !!team;
+  const [name, setName] = useState(team?.name || '');
+  const [sport, setSport] = useState(team?.sport_type || 'football');
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(team?.logo_url || null);
+  const [players, setPlayers] = useState<Player[]>(
+    Array.isArray(team?.player_names)
+      ? team.player_names.map((n: string, i: number) => ({
+          name: n,
+          photo: team.player_photos?.[i] || undefined,
+          position: team.player_info?.[i]?.position || '',
+          number: team.player_info?.[i]?.number || '',
+          dob: team.player_info?.[i]?.dob || '',
+        }))
+      : [],
+  );
   const [saving, setSaving] = useState(false);
 
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,23 +150,31 @@ function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
 
   const save = async () => {
     if (!name.trim()) return toast({ title: 'أدخل اسم الفريق', variant: 'destructive' });
-    if (tournamentId === 'none') return toast({ title: 'اختر البطولة', variant: 'destructive' });
     setSaving(true);
     try {
-      const logoUrl = logoFile ? await upload(logoFile, 'team-logos') : null;
+      const logoUrl = logoFile ? await upload(logoFile, 'team-logos') : (team?.logo_url || null);
       const names: string[] = []; const photos: string[] = []; const info: any[] = [];
       for (const p of players) {
         if (!p.name.trim()) continue;
         names.push(p.name);
-        photos.push(p.photoFile ? (await upload(p.photoFile, 'player-photos')) || '' : '');
+        photos.push(p.photoFile ? (await upload(p.photoFile, 'player-photos')) || '' : (p.photo || ''));
         info.push({ name: p.name, position: p.position || '', number: p.number || '', dob: p.dob || '' });
       }
-      const { error } = await supabase.from('teams').insert({
-        tournament_id: tournamentId, name: name.trim(), logo_url: logoUrl,
+      const payload = {
+        name: name.trim(), logo_url: logoUrl,
         sport_type: sport as any, player_names: names, player_photos: photos, player_info: info,
-      } as any);
-      if (error) throw error;
-      toast({ title: '✅ تم إضافة الفريق' });
+      };
+      if (isEdit) {
+        const { error } = await supabase.from('teams').update(payload).eq('id', team.id);
+        if (error) throw error;
+        toast({ title: '✅ تم تعديل الفريق' });
+      } else {
+        const { error } = await supabase.from('teams').insert({
+          ...payload, tournament_id: null, owner_id: user?.id || null,
+        } as any);
+        if (error) throw error;
+        toast({ title: '✅ تم إضافة الفريق' });
+      }
       onSaved();
     } catch (e: any) {
       toast({ title: 'خطأ', description: e.message, variant: 'destructive' });
@@ -173,7 +186,7 @@ function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
       <Card className="max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold">إضافة فريق</h3>
+            <h3 className="font-bold">{isEdit ? 'تعديل فريق' : 'إضافة فريق'}</h3>
             <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
@@ -196,17 +209,6 @@ function CreateTeamDialog({ tournaments, onClose, onSaved }: any) {
                 </Card>
               ))}
             </div>
-          </div>
-
-          <div>
-            <Label>البطولة *</Label>
-            <Select value={tournamentId} onValueChange={setTournamentId}>
-              <SelectTrigger><SelectValue placeholder="اختر البطولة" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" disabled>اختر البطولة</SelectItem>
-                {tournaments.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-2">
