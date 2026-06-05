@@ -251,7 +251,7 @@ function fileToDataUrl(file: Blob): Promise<string> {
 }
 function storageFrom(bucket: string) {
   return {
-    async upload(path: string, file: Blob) {
+    async upload(path: string, file: Blob, _opts?: { upsert?: boolean }) {
       const key = `${bucket}/${path}`;
       files[key] = await fileToDataUrl(file);
       saveFiles();
