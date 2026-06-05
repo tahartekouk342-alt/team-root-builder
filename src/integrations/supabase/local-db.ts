@@ -334,7 +334,7 @@ const functions = {
 function channel(_name: string) {
   const subs: { table: string; cb: () => void }[] = [];
   const api = {
-    on(_event: string, config: { table?: string }, cb: () => void) {
+    on(_event: string, config: { table?: string; event?: string; schema?: string; filter?: string }, cb: () => void) {
       subs.push({ table: config.table || "", cb });
       return api;
     },
