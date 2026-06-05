@@ -186,7 +186,7 @@ function CreateTeamDialog({ team, onClose, onSaved }: any) {
       <Card className="max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold">إضافة فريق</h3>
+            <h3 className="font-bold">{isEdit ? 'تعديل فريق' : 'إضافة فريق'}</h3>
             <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
