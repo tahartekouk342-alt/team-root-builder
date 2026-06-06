@@ -427,6 +427,15 @@ export default function OrganizerSettings() {
             </Button>
           </CardContent>
         </Card>
+
+        <Button
+          variant="destructive"
+          className="w-full mt-6"
+          onClick={async () => { await signOut(); navigate('/auth'); }}
+        >
+          <ShieldOff className="w-4 h-4 ml-2" />
+          تسجيل الخروج
+        </Button>
       </div>
     </div>
   );
