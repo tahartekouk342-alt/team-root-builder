@@ -109,6 +109,47 @@ export default function OrganizerSettings() {
   };
 
   const handleSavePin = async () => {
+    return _handleSavePin();
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!accountEmail) return;
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: accountEmail });
+      if (error) throw error;
+      toast({ title: 'تم تحديث البريد الإلكتروني ✅' });
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'تم تحديث كلمة المرور ✅' });
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const _handleSavePin = async () => {
     if (!user) return;
     if (newPin.length < 4) {
       toast({ title: 'رمز PIN يجب أن يكون 4 أرقام على الأقل', variant: 'destructive' });
