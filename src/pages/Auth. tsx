@@ -1,0 +1,168 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, Mail, Lock, User as UserIcon, Phone, Trophy, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+
+type Mode = 'login' | 'signup' | 'forgot';
+
+export default function Auth() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { signIn, signUp, resetPassword } = useAuth();
+
+  const [mode, setMode] = useState<Mode>('login');
+  const [loading, setLoading] = useState(false);
+
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (mode === 'login') {
+        const { error } = await signIn(email, password);
+        if (error) throw new Error(error.message);
+        toast({ title: 'مرحباً بعودتك 👋' });
+        navigate('/');
+      } else if (mode === 'signup') {
+        if (password.length < 6) throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        if (password !== confirm) throw new Error('كلمتا المرور غير متطابقتين');
+        const { error } = await signUp(email, password, { display_name: username, username, phone });
+        if (error) throw new Error(error.message);
+        toast({ title: 'تم إنشاء الحساب بنجاح ✅' });
+        navigate('/');
+      } else {
+        const { error } = await resetPassword(email);
+        if (error) throw new Error(error.message);
+        toast({ title: 'تم إرسال رابط إعادة التعيين 📧', description: 'تحقق من بريدك الإلكتروني' });
+        setMode('login');
+      }
+    } catch (err: any) {
+      toast({ title: 'خطأ', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-background" dir="rtl">
+      <div className="w-full max-w-md">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg mb-4">
+            <Trophy className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <h1 className="font-display text-3xl font-bold tracking-wide">منصة البطولات</h1>
+          <p className="text-muted-foreground text-sm mt-1">إدارة بطولاتك باحترافية</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {mode === 'login' ? 'تسجيل الدخول' : mode === 'signup' ? 'إنشاء حساب جديد' : 'استعادة كلمة المرور'}
+            </CardTitle>
+            <CardDescription>
+              {mode === 'login'
+                ? 'أدخل بياناتك للوصول إلى لوحة التحكم'
+                : mode === 'signup'
+                ? 'أنشئ حسابك للبدء في إدارة البطولات'
+                : 'أدخل بريدك لإرسال رابط إعادة التعيين'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label>اسم المستخدم</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input className="pr-10" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="اسمك" required />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>البريد الإلكتروني</Label>
+                <div className="relative">
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input type="email" className="pr-10" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+                </div>
+              </div>
+
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label>رقم الهاتف</Label>
+                  <div className="relative">
+                    <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input type="tel" className="pr-10" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06xxxxxxxx" />
+                  </div>
+                </div>
+              )}
+
+              {mode !== 'forgot' && (
+                <div className="space-y-2">
+                  <Label>كلمة المرور</Label>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input type="password" className="pr-10" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+                  </div>
+                </div>
+              )}
+
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <Label>تأكيد كلمة المرور</Label>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input type="password" className="pr-10" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" required />
+                  </div>
+                </div>
+              )}
+
+              {mode === 'login' && (
+                <button type="button" onClick={() => setMode('forgot')} className="text-sm text-primary hover:underline block">
+                  نسيت كلمة المرور؟
+                </button>
+              )}
+
+              <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                  <>
+                    {mode === 'login' ? 'دخول' : mode === 'signup' ? 'إنشاء الحساب' : 'إرسال الرابط'}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center text-sm">
+              {mode === 'login' && (
+                <p className="text-muted-foreground">
+                  ليس لديك حساب؟{' '}
+                  <button onClick={() => setMode('signup')} className="text-primary font-bold hover:underline">إنشاء حساب</button>
+                </p>
+              )}
+              {mode === 'signup' && (
+                <p className="text-muted-foreground">
+                  لديك حساب بالفعل؟{' '}
+                  <button onClick={() => setMode('login')} className="text-primary font-bold hover:underline">تسجيل الدخول</button>
+                </p>
+              )}
+              {mode === 'forgot' && (
+                <button onClick={() => setMode('login')} className="text-primary font-bold hover:underline">العودة لتسجيل الدخول</button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
