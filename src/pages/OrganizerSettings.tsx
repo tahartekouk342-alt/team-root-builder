@@ -276,6 +276,10 @@ export default function OrganizerSettings() {
 
         {/* PIN Section */}
         <Card>
+        </Card>
+
+        {/* placeholder removed */}
+        {false && <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Lock className="w-5 h-5" />رمز PIN للأمان</CardTitle>
             <CardDescription>
