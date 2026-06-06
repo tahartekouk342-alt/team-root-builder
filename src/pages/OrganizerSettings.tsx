@@ -20,7 +20,7 @@ import { setLanguage } from '@/i18n';
 export default function OrganizerSettings() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const { resolvedTheme, setTheme } = useTheme();
 
