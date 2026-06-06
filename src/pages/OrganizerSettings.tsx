@@ -274,12 +274,47 @@ export default function OrganizerSettings() {
           </CardContent>
         </Card>
 
-        {/* PIN Section */}
-        <Card>
+        {/* Account credentials */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" />البريد الإلكتروني</CardTitle>
+            <CardDescription>تغيير البريد الإلكتروني المرتبط بحسابك</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني</Label>
+              <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} placeholder="you@example.com" />
+            </div>
+            <Button onClick={handleUpdateEmail} disabled={savingEmail} className="gradient-primary text-primary-foreground">
+              {savingEmail ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Save className="w-4 h-4 ml-2" />}
+              حفظ البريد
+            </Button>
+          </CardContent>
         </Card>
 
-        {/* placeholder removed */}
-        {false && <Card>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><KeyRound className="w-5 h-5" />كلمة المرور</CardTitle>
+            <CardDescription>تغيير كلمة مرور حسابك</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>كلمة المرور الجديدة</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div className="space-y-2">
+              <Label>تأكيد كلمة المرور</Label>
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button onClick={handleUpdatePassword} disabled={savingPassword} className="gradient-primary text-primary-foreground">
+              {savingPassword ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <KeyRound className="w-4 h-4 ml-2" />}
+              تحديث كلمة المرور
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* PIN Section */}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Lock className="w-5 h-5" />رمز PIN للأمان</CardTitle>
             <CardDescription>
