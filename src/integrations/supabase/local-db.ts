@@ -421,7 +421,7 @@ const auth = {
     emitAuth("SIGNED_IN", sessionFor(u));
     return { data: { user: publicUser(u), session: sessionFor(u) }, error: null };
   },
-  async resetPasswordForEmail(email: string) {
+  async resetPasswordForEmail(email: string, _options?: any) {
     const exists = loadUsers().some((x) => x.email === email);
     if (!exists) return { data: {}, error: { message: "لا يوجد حساب بهذا البريد" } };
     return { data: {}, error: null };
