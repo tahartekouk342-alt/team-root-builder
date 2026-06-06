@@ -2,7 +2,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, User, Lock, Camera, Save, Loader2, ShieldOff, Languages, Moon, Sun, Dice5 } from 'lucide-react';
+import { ArrowRight, User, Lock, Camera, Save, Loader2, ShieldOff, Languages, Moon, Sun, Dice5, Mail, KeyRound } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import { setLanguage } from '@/i18n';
 export default function OrganizerSettings() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -39,6 +39,13 @@ export default function OrganizerSettings() {
 
   const [autoDraw, setAutoDraw] = useState(true);
 
+  // Account credentials (email / password)
+  const [accountEmail, setAccountEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) return; // allow guest
 
@@ -46,6 +53,9 @@ export default function OrganizerSettings() {
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url);
+    }
+    if (user) {
+      setAccountEmail((user as any).email || '');
     }
     if (user) {
       supabase
@@ -99,6 +109,47 @@ export default function OrganizerSettings() {
   };
 
   const handleSavePin = async () => {
+    return _handleSavePin();
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!accountEmail) return;
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: accountEmail });
+      if (error) throw error;
+      toast({ title: 'تم تحديث البريد الإلكتروني ✅' });
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'تم تحديث كلمة المرور ✅' });
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const _handleSavePin = async () => {
     if (!user) return;
     if (newPin.length < 4) {
       toast({ title: 'رمز PIN يجب أن يكون 4 أرقام على الأقل', variant: 'destructive' });
@@ -223,6 +274,45 @@ export default function OrganizerSettings() {
           </CardContent>
         </Card>
 
+        {/* Account credentials */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" />البريد الإلكتروني</CardTitle>
+            <CardDescription>تغيير البريد الإلكتروني المرتبط بحسابك</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني</Label>
+              <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} placeholder="you@example.com" />
+            </div>
+            <Button onClick={handleUpdateEmail} disabled={savingEmail} className="gradient-primary text-primary-foreground">
+              {savingEmail ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Save className="w-4 h-4 ml-2" />}
+              حفظ البريد
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><KeyRound className="w-5 h-5" />كلمة المرور</CardTitle>
+            <CardDescription>تغيير كلمة مرور حسابك</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>كلمة المرور الجديدة</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div className="space-y-2">
+              <Label>تأكيد كلمة المرور</Label>
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button onClick={handleUpdatePassword} disabled={savingPassword} className="gradient-primary text-primary-foreground">
+              {savingPassword ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <KeyRound className="w-4 h-4 ml-2" />}
+              تحديث كلمة المرور
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* PIN Section */}
         <Card>
           <CardHeader>
@@ -337,6 +427,15 @@ export default function OrganizerSettings() {
             </Button>
           </CardContent>
         </Card>
+
+        <Button
+          variant="destructive"
+          className="w-full mt-6"
+          onClick={async () => { await signOut(); navigate('/auth'); }}
+        >
+          <ShieldOff className="w-4 h-4 ml-2" />
+          تسجيل الخروج
+        </Button>
       </div>
     </div>
   );

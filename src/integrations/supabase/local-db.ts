@@ -355,12 +355,94 @@ function channel(_name: string) {
   return api;
 }
 
-// ---- auth stub ----
+// ---- local auth (localStorage backed) ----
+const AUTH_USERS_KEY = "bottolat_local_auth_users_v1";
+const AUTH_SESSION_KEY = "bottolat_local_auth_session_v1";
+
+type AuthUser = {
+  id: string;
+  email: string;
+  phone?: string | null;
+  password: string;
+  user_metadata: Record<string, any>;
+  created_at: string;
+};
+
+function loadUsers(): AuthUser[] {
+  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || "[]"); } catch { return []; }
+}
+function saveUsers(u: AuthUser[]) { try { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(u)); } catch {} }
+function loadSessionId(): string | null { try { return localStorage.getItem(AUTH_SESSION_KEY); } catch { return null; } }
+function saveSessionId(id: string | null) { try { id ? localStorage.setItem(AUTH_SESSION_KEY, id) : localStorage.removeItem(AUTH_SESSION_KEY); } catch {} }
+
+const authListeners = new Set<(event: string, session: any) => void>();
+function publicUser(u: AuthUser) {
+  const { password, ...rest } = u;
+  return { ...rest, app_metadata: {}, aud: "authenticated" };
+}
+function sessionFor(u: AuthUser) { return { user: publicUser(u), access_token: "local-" + u.id }; }
+function emitAuth(event: string, session: any) { authListeners.forEach((cb) => cb(event, session)); }
+
 const auth = {
-  async getSession() { return { data: { session: null }, error: null }; },
-  async getUser() { return { data: { user: null }, error: null }; },
-  onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; },
-  async signOut() { return { error: null }; },
+  async getSession() {
+    const id = loadSessionId();
+    const u = id ? loadUsers().find((x) => x.id === id) : null;
+    return { data: { session: u ? sessionFor(u) : null }, error: null };
+  },
+  async getUser() {
+    const id = loadSessionId();
+    const u = id ? loadUsers().find((x) => x.id === id) : null;
+    return { data: { user: u ? publicUser(u) : null }, error: null };
+  },
+  onAuthStateChange(cb: (event: string, session: any) => void) {
+    authListeners.add(cb);
+    return { data: { subscription: { unsubscribe() { authListeners.delete(cb); } } } };
+  },
+  async signUp({ email, password, phone, options }: any) {
+    const users = loadUsers();
+    if (users.some((u) => u.email === email)) {
+      return { data: { user: null, session: null }, error: { message: "هذا البريد مسجل مسبقاً" } };
+    }
+    const u: AuthUser = {
+      id: uuid(), email, phone: phone || null, password,
+      user_metadata: (options && options.data) || {},
+      created_at: new Date().toISOString(),
+    };
+    users.push(u); saveUsers(users); saveSessionId(u.id);
+    emitAuth("SIGNED_IN", sessionFor(u));
+    return { data: { user: publicUser(u), session: sessionFor(u) }, error: null };
+  },
+  async signInWithPassword({ email, password }: any) {
+    const u = loadUsers().find((x) => x.email === email);
+    if (!u || u.password !== password) {
+      return { data: { user: null, session: null }, error: { message: "بيانات الدخول غير صحيحة" } };
+    }
+    saveSessionId(u.id);
+    emitAuth("SIGNED_IN", sessionFor(u));
+    return { data: { user: publicUser(u), session: sessionFor(u) }, error: null };
+  },
+  async resetPasswordForEmail(email: string, _options?: any) {
+    const exists = loadUsers().some((x) => x.email === email);
+    if (!exists) return { data: {}, error: { message: "لا يوجد حساب بهذا البريد" } };
+    return { data: {}, error: null };
+  },
+  async updateUser({ email, password, data }: any) {
+    const id = loadSessionId();
+    const users = loadUsers();
+    const u = id ? users.find((x) => x.id === id) : null;
+    if (!u) return { data: { user: null }, error: { message: "غير مسجّل الدخول" } };
+    if (email) u.email = email;
+    if (password) u.password = password;
+    if (data) u.user_metadata = { ...u.user_metadata, ...data };
+    saveUsers(users);
+    emitAuth("USER_UPDATED", sessionFor(u));
+    return { data: { user: publicUser(u) }, error: null };
+  },
+  async signOut() {
+    saveSessionId(null);
+    emitAuth("SIGNED_OUT", null);
+    return { error: null };
+  },
 };
 
 export const supabase = {

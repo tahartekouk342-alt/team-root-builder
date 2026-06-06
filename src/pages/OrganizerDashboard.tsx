@@ -133,9 +133,6 @@ export default function OrganizerDashboard() {
                 <h2 className="text-2xl font-bold text-white mb-1">مرحباً {profile?.display_name || 'بك'}!</h2>
                 <p className="text-white/90 text-sm mt-1">إدارة بطولاتك بسهولة واحترافية</p>
               </div>
-              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <Trophy className="w-8 h-8 text-white" />
-              </div>
             </div>
             <div className="grid grid-cols-3 gap-2 bg-black/30 rounded-lg p-3">
               <Stat label="البطولات النشطة" value={stats?.active || 0} icon={Trophy} />
