@@ -2,7 +2,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, User, Lock, Camera, Save, Loader2, ShieldOff, Languages, Moon, Sun, Dice5 } from 'lucide-react';
+import { ArrowRight, User, Lock, Camera, Save, Loader2, ShieldOff, Languages, Moon, Sun, Dice5, Mail, KeyRound } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,13 @@ export default function OrganizerSettings() {
 
   const [autoDraw, setAutoDraw] = useState(true);
 
+  // Account credentials (email / password)
+  const [accountEmail, setAccountEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) return; // allow guest
 
@@ -46,6 +53,9 @@ export default function OrganizerSettings() {
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url);
+    }
+    if (user) {
+      setAccountEmail((user as any).email || '');
     }
     if (user) {
       supabase
